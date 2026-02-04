@@ -22,10 +22,10 @@ class CommandCenterSeeder extends Seeder
     public function run(): void
     {
         $user = User::firstOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'maseeh.niazaai@gmail.com'],
             [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
+                'name' => 'Maseeh Niazaai',
+                'password' => Hash::make('195068'),
                 'email_verified_at' => now(),
             ]
         );
