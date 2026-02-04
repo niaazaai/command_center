@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
@@ -23,14 +24,19 @@ import { useToast } from '@/contexts/ToastContext';
 
 const EXIT_ANIMATION_MS = 400;
 
-function TodoRow({ item, completingId, onDelete, onReorder, onMarkComplete, onCompleteDone }) {
+const TodoRow = React.memo(function TodoRow({ item, completingId, onDelete, onReorder, onMarkComplete, onCompleteDone }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
   const [showTick, setShowTick] = useState(false);
-  const style = { transform: CSS.Transform.toString(transform), transition };
   const isCompleting = completingId === item.id;
   const exitDoneRef = useRef(false);
+
+  const style = useMemo(() => ({
+    transform: CSS.Transform.toString(transform),
+    transition,
+    ...(isDragging ? { willChange: 'transform' } : {}),
+  }), [transform, transition, isDragging]);
 
   const handleDelete = async () => {
     try {
@@ -73,8 +79,9 @@ function TodoRow({ item, completingId, onDelete, onReorder, onMarkComplete, onCo
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center gap-3 py-2.5 px-3 rounded-lg border border-border bg-background transition-all duration-300 ease-out',
-        isDragging && 'opacity-50 shadow-md scale-[0.98]',
+        'flex items-center gap-3 py-2.5 px-3 rounded-lg border border-border bg-background',
+        !isDragging && 'transition-[transform,opacity,height] duration-300 ease-out',
+        isDragging && 'opacity-0 pointer-events-none',
         isCompleting && 'opacity-0 scale-95 h-0 overflow-hidden py-0 px-3 border-0'
       )}
     >
@@ -96,6 +103,20 @@ function TodoRow({ item, completingId, onDelete, onReorder, onMarkComplete, onCo
       </Button>
     </div>
   );
+});
+
+function DragOverlayRow({ item }) {
+  return (
+    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg border border-border bg-background shadow-lg cursor-grabbing ring-2 ring-primary/20">
+      <div className="shrink-0 h-4 w-4 rounded border-2 border-muted" aria-hidden />
+      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+      <span className={cn('flex-1 min-w-0 text-sm flex items-center gap-2 flex-wrap truncate', item.status === 'pending' && 'text-muted-foreground')}>
+        {item.title}
+        {item.category && <CategoryBadge category={item.category} />}
+      </span>
+      <div className="h-8 w-8 shrink-0" aria-hidden />
+    </div>
+  );
 }
 
 export function TodayTodo() {
@@ -106,11 +127,12 @@ export function TodayTodo() {
   const [pendingStartIndex, setPendingStartIndex] = useState(0);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [completingId, setCompletingId] = useState(null);
+  const [activeId, setActiveId] = useState(null);
   const toast = useToast();
 
   const forDate = new Date().toISOString().slice(0, 10);
 
-  const load = () => {
+  const load = useCallback(() => {
     api.get('/categories').then(setCategories);
     api.get(`/todos?for_date=${forDate}`).then((list) => {
       setTodos(list);
@@ -118,15 +140,16 @@ export function TodayTodo() {
       setPendingStartIndex(idx === -1 ? list.length : idx);
       setCompletingId(null);
     });
-  };
+  }, [forDate]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const todayTodos = todos.filter((t) => t.status !== 'pending');
   const pendingTodos = todos.filter((t) => t.status === 'pending');
-  const allOrdered = [...todayTodos, ...pendingTodos];
+  const allOrdered = useMemo(() => [...todayTodos, ...pendingTodos], [todayTodos, pendingTodos]);
+  const sortableIds = useMemo(() => allOrdered.map((t) => t.id), [allOrdered]);
   const currentPendingStart = todayTodos.length;
 
   const handleAdd = async (e) => {
@@ -148,27 +171,32 @@ export function TodayTodo() {
     }
   };
 
-  const handleDeleteResult = (msg) => {
+  const handleDeleteResult = useCallback((msg) => {
     if (msg) toast.success(msg);
     else toast.error('Failed to delete');
-  };
+  }, [toast]);
 
-  const handleMarkComplete = (id) => {
+  const handleMarkComplete = useCallback((id) => {
     setCompletingId(id);
-  };
+  }, []);
 
-  const handleCompleteDone = (success) => {
+  const handleCompleteDone = useCallback((success) => {
     if (success) toast.success('Todo completed');
     else toast.error('Failed to complete');
-  };
+  }, [toast]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleDragEnd = async (event) => {
+  const handleDragStart = useCallback((event) => {
+    setActiveId(event.active.id);
+  }, []);
+
+  const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event;
+    setActiveId(null);
     if (!over || active.id === over.id) return;
     const oldIndex = allOrdered.findIndex((t) => t.id === active.id);
     const newIndex = allOrdered.findIndex((t) => t.id === over.id);
@@ -191,7 +219,7 @@ export function TodayTodo() {
       load();
       toast.error('Failed to update order');
     }
-  };
+  }, [allOrdered, currentPendingStart, load, toast]);
 
   const flattenCategories = (list, level = 0) => {
     let out = [];
@@ -235,8 +263,8 @@ export function TodayTodo() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b border-border/60">
             Today — {forDate}
           </h2>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={allOrdered.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
               <div className="space-y-1.5">
                 {todayTodos.map((item) => (
                   <TodoRow
@@ -270,6 +298,12 @@ export function TodayTodo() {
                 </div>
               </section>
             </SortableContext>
+            <DragOverlay>
+              {activeId ? (() => {
+                const item = allOrdered.find((t) => t.id === activeId);
+                return item ? <DragOverlayRow item={item} /> : null;
+              })() : null}
+            </DragOverlay>
           </DndContext>
         </section>
       </CardContent>

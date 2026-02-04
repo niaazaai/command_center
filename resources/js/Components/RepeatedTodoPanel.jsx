@@ -202,15 +202,23 @@ export function RepeatedTodoPanel() {
                         const busy = toggling?.id === item.id && toggling?.day === key;
                         return (
                           <td key={key} className="py-1 px-0.5 align-middle">
-                            <button
-                              type="button"
-                              onClick={() => handleToggle(item, key)}
-                              disabled={busy}
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => !busy && handleToggle(item, key)}
+                              onKeyDown={(e) => {
+                                if (busy) return;
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleToggle(item, key);
+                                }
+                              }}
                               className={cn(
-                                'w-full flex items-center justify-center min-h-[36px] rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                                'w-full flex items-center justify-center min-h-[36px] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                                 isToday && 'bg-primary/5',
                                 checked && 'bg-primary/10',
-                                !checked && 'hover:bg-muted/50'
+                                !checked && 'hover:bg-muted/50',
+                                busy && 'pointer-events-none opacity-60'
                               )}
                               aria-label={`${key}: ${checked ? 'Done' : 'Not done'}. Toggle.`}
                               aria-busy={busy}
@@ -220,7 +228,7 @@ export function RepeatedTodoPanel() {
                                 className="pointer-events-none h-4 w-4 rounded border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                 aria-hidden
                               />
-                            </button>
+                            </div>
                           </td>
                         );
                       })}
