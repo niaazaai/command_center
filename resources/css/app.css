@@ -66,3 +66,14 @@
     * { border-color: hsl(var(--border)); }
     body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
 }
+
+/* TipTap / rich text editor */
+.rich-text-editor-inner p { margin-bottom: 0.25rem; }
+.rich-text-editor-inner p:last-child { margin-bottom: 0; }
+.rich-text-editor-inner ul { list-style-type: disc; padding-left: 1.25rem; margin: 0.25rem 0; }
+.rich-text-editor-inner ol { list-style-type: decimal; padding-left: 1.25rem; margin: 0.25rem 0; }
+.rich-text-editor-inner li { margin: 0.125rem 0; }
+.rich-text-editor-inner strong { font-weight: 600; }
+.rich-text-editor-inner code { font-size: 0.875em; padding: 0.125rem 0.25rem; border-radius: 0.25rem; background: hsl(var(--muted)); }
+.rich-text-editor-inner pre { padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: hsl(var(--muted)); overflow-x: auto; margin: 0.25rem 0; }
+.rich-text-editor-inner blockquote { border-left: 3px solid hsl(var(--border)); padding-left: 0.75rem; margin: 0.25rem 0; color: hsl(var(--muted-foreground)); }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,9 +28,20 @@ export function ConfirmDialog({
   onConfirm,
   destructive = true,
 }) {
-  const handleConfirm = () => {
-    onConfirm?.();
-    onOpenChange(false);
+  const [loading, setLoading] = useState(false);
+  const handleConfirm = async () => {
+    const result = onConfirm?.();
+    if (result && typeof result.then === 'function') {
+      setLoading(true);
+      try {
+        await result;
+        onOpenChange(false);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -44,8 +55,8 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant={destructive ? 'destructive' : 'default'} onClick={handleConfirm}>
-            {confirmLabel}
+          <Button variant={destructive ? 'destructive' : 'default'} onClick={handleConfirm} disabled={loading}>
+            {loading ? '…' : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -18,6 +18,7 @@ export function CategorySelectWithDelete({
   onCategoriesChange,
   onAddCategory,
   className,
+  deleteConfirmDescription = 'Are you sure? Todos in this category will become uncategorized.',
 }) {
   const [open, setOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -56,7 +57,7 @@ export function CategorySelectWithDelete({
       <Button
         type="button"
         variant="outline"
-        className="w-[140px] rounded-lg border-border justify-between gap-1"
+        className="w-full min-w-[140px] rounded-xl border-border justify-between gap-1 h-10"
         onClick={() => setOpen((o) => !o)}
       >
         <span className="truncate flex items-center gap-1.5 min-w-0">
@@ -66,7 +67,7 @@ export function CategorySelectWithDelete({
       </Button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-[9999] min-w-[200px] rounded-lg border border-border bg-background shadow-lg py-1 max-h-64 overflow-auto">
+        <div className="absolute top-full left-0 mt-1 z-[9999] min-w-[200px] w-full rounded-xl border border-border bg-background shadow-lg py-1 max-h-64 overflow-auto">
           <button
             type="button"
             className={cn(
@@ -119,7 +120,7 @@ export function CategorySelectWithDelete({
         open={!!deleteConfirm}
         onOpenChange={(open) => !open && setDeleteConfirm(null)}
         title="Delete category"
-        description="Are you sure? Todos in this category will become uncategorized."
+        description={deleteConfirmDescription}
         confirmLabel="Delete"
         onConfirm={handleConfirmDelete}
       />
