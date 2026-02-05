@@ -25,7 +25,7 @@ function isTimeBoundInWindow(reminder) {
   return at >= now - ONE_DAY_MS && at <= now + ONE_DAY_MS;
 }
 
-function PermanentReminderItem({ reminder, onDeleteRequest }) {
+function PermanentReminderItem({ reminder, onDeleteRequest, showDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: reminder.id,
   });
@@ -46,14 +46,16 @@ function PermanentReminderItem({ reminder, onDeleteRequest }) {
       <div className="flex-1 min-w-0">
         <div className="truncate font-medium">{reminder.title}</div>
       </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 rounded-lg" onClick={() => onDeleteRequest(reminder)}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {showDelete && (
+        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 rounded-lg" onClick={() => onDeleteRequest(reminder)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }
 
-function TimeBoundReminderItem({ reminder, onDeleteRequest }) {
+function TimeBoundReminderItem({ reminder, onDeleteRequest, showDelete }) {
   const at = reminder.remind_at
     ? new Date(reminder.remind_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
     : '';
@@ -64,14 +66,16 @@ function TimeBoundReminderItem({ reminder, onDeleteRequest }) {
         <div className="truncate font-medium">{reminder.title}</div>
         <div className="text-xs text-muted-foreground">{at}</div>
       </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 rounded-lg" onClick={() => onDeleteRequest(reminder)}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {showDelete && (
+        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 rounded-lg" onClick={() => onDeleteRequest(reminder)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }
 
-export function ReminderList({ reminders, onReorder, className }) {
+export function ReminderList({ reminders, onReorder, className, showDelete = true }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const toast = useToast();
 
@@ -134,6 +138,7 @@ export function ReminderList({ reminders, onReorder, className }) {
                   key={reminder.id}
                   reminder={reminder}
                   onDeleteRequest={setDeleteConfirm}
+                  showDelete={showDelete}
                 />
               ))}
             </div>
@@ -152,6 +157,7 @@ export function ReminderList({ reminders, onReorder, className }) {
                       key={reminder.id}
                       reminder={reminder}
                       onDeleteRequest={setDeleteConfirm}
+                      showDelete={showDelete}
                     />
                   ))}
                 </div>

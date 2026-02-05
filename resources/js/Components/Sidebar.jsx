@@ -16,6 +16,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { cn } from '@/lib/utils';
 import { ReminderList } from './ReminderList';
 import { DateTimePicker } from './DateTimePicker';
+import { Logo } from './Logo';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -87,6 +88,7 @@ export function Sidebar({ open, onClose, minimized = false, onToggleMinimize, cl
   if (minimized) {
     return (
       <aside className={cn(className, 'md:flex md:flex-col md:items-center md:py-2')}>
+        <Logo className="mb-2 [&>span]:hidden" />
         <Button
           variant="ghost"
           size="icon"
@@ -170,7 +172,10 @@ export function Sidebar({ open, onClose, minimized = false, onToggleMinimize, cl
   }
 
   return (
-    <aside className={cn(className)}>
+    <aside className={cn(className, 'flex flex-col')}>
+      <div className="flex-shrink-0 p-3 border-b border-border/80">
+        <Logo className="[&>span]:inline" />
+      </div>
       {/* Small calendar */}
       <Card className="m-2 rounded-xl border border-border bg-card shadow-sm">
         <CardHeader className="p-2 pb-1 flex flex-row items-center justify-between border-b border-border/80">
@@ -229,7 +234,7 @@ export function Sidebar({ open, onClose, minimized = false, onToggleMinimize, cl
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-        <ReminderList reminders={reminders} onReorder={loadReminders} className="flex-1 min-h-0 overflow-auto" />
+        <ReminderList reminders={reminders} onReorder={loadReminders} className="flex-1 min-h-0 overflow-auto" showDelete={false} />
       </div>
 
       <Dialog open={addOpen} onOpenChange={(open) => !open && closeAddDialog()}>
