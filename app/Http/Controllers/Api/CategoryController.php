@@ -28,6 +28,9 @@ class CategoryController extends Controller
             'color' => ['nullable', 'string', 'max:20'],
         ]);
         $data['user_id'] = $request->user()->id;
+        if (! empty($data['parent_id']) && ! Category::where('id', $data['parent_id'])->where('user_id', $request->user()->id)->exists()) {
+            abort(403, 'Parent category does not belong to user');
+        }
         $data['sort_order'] = Category::where('user_id', $request->user()->id)->max('sort_order') + 1;
         $category = Category::create($data);
         return response()->json($category, 201);

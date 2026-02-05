@@ -45,6 +45,9 @@ class TodoController extends Controller
             'for_date' => ['nullable', 'date'],
         ]);
         $data['user_id'] = $request->user()->id;
+        if (! empty($data['category_id']) && ! \App\Models\Category::where('id', $data['category_id'])->where('user_id', $request->user()->id)->exists()) {
+            abort(403, 'Category does not belong to user');
+        }
         $data['status'] = TodoStatus::Today;
         $data['for_date'] = $data['for_date'] ?? today()->toDateString();
         $data['sort_order'] = Todo::where('user_id', $request->user()->id)->max('sort_order') + 1;
@@ -63,6 +66,9 @@ class TodoController extends Controller
             'category_id' => ['nullable', 'exists:categories,id'],
             'status' => ['sometimes', Rule::enum(TodoStatus::class)],
         ]);
+        if (array_key_exists('category_id', $data) && $data['category_id'] !== null && ! \App\Models\Category::where('id', $data['category_id'])->where('user_id', $request->user()->id)->exists()) {
+            abort(403, 'Category does not belong to user');
+        }
         $todo->update($data);
         $todo->load('category');
         return response()->json($todo);

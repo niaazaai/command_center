@@ -19,7 +19,6 @@ import { CategoryBadge } from '@/Components/CategoryBadge';
 import { RichTextEditor } from '@/Components/RichTextEditor';
 import { api } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { cn } from '@/lib/utils';
 
 function flattenCategories(list, level = 0) {
   let out = [];

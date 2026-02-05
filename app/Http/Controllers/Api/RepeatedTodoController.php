@@ -8,28 +8,10 @@ use App\Models\RepeatedTodoWeekSnapshot;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\UniqueConstraintViolationException;
 
 class RepeatedTodoController extends Controller
 {
-    private const DEBUG_LOG = '/Users/rtamedia/dev/.cursor/debug.log';
-
-    // #region agent log
-    private static function debugLog(string $location, string $message, array $data, string $hypothesisId = ''): void
-    {
-        $payload = array_filter([
-            'timestamp' => (int) (microtime(true) * 1000),
-            'location' => $location,
-            'message' => $message,
-            'data' => $data,
-            'hypothesisId' => $hypothesisId,
-            'sessionId' => 'debug-session',
-        ]);
-        @file_put_contents(self::DEBUG_LOG, json_encode($payload) . "\n", FILE_APPEND | LOCK_EX);
-    }
-    // #endregion
-
     private function weekStart(Carbon $date): Carbon
     {
         return $date->copy()->startOfWeek(Carbon::MONDAY);
@@ -75,12 +57,6 @@ class RepeatedTodoController extends Controller
         $today = Carbon::today();
         $currentWeekStart = $this->weekStart($today);
         $weekStartString = $currentWeekStart->toDateString();
-        // #region agent log
-        self::debugLog('RepeatedTodoController::ensureWeekArchived', 'entry', [
-            'userId' => $userId,
-            'weekStartString' => $weekStartString,
-        ], 'H2');
-        // #endregion
         $repeatedTodos = RepeatedTodo::where('user_id', $userId)->get();
         foreach ($repeatedTodos as $rt) {
             $lastSnapshot = RepeatedTodoWeekSnapshot::where('repeated_todo_id', $rt->id)
@@ -93,44 +69,16 @@ class RepeatedTodoController extends Controller
             $hasCurrent = RepeatedTodoWeekSnapshot::where('repeated_todo_id', $rt->id)
                 ->whereRaw('date(week_start) = ?', [$weekStartString])
                 ->exists();
-            // #region agent log
-            $rawRow = DB::table('repeated_todo_week_snapshots')
-                ->where('repeated_todo_id', $rt->id)
-                ->whereRaw("date(week_start) = ?", [$weekStartString])
-                ->first();
-            self::debugLog('RepeatedTodoController::ensureWeekArchived', 'per-rt', [
-                'repeated_todo_id' => $rt->id,
-                'hasCurrent' => $hasCurrent,
-                'rawRowExists' => $rawRow !== null,
-                'rawWeekStart' => $rawRow ? $rawRow->week_start : null,
-            ], 'H1');
-            // #endregion
             if ($hasCurrent) {
                 continue;
             }
-            // #region agent log
-            self::debugLog('RepeatedTodoController::ensureWeekArchived', 'before ensureSnapshot', [
-                'repeated_todo_id' => $rt->id,
-                'week_start' => $weekStartString,
-            ], 'H2');
-            // #endregion
-            $snap = $this->ensureSnapshotForWeek($rt->id, $weekStartString);
-            // #region agent log
-            self::debugLog('RepeatedTodoController::ensureWeekArchived', 'after firstOrCreate', [
-                'repeated_todo_id' => $rt->id,
-                'wasRecentlyCreated' => $snap->wasRecentlyCreated,
-                'snapId' => $snap->id,
-            ], 'H5');
-            // #endregion
+            $this->ensureSnapshotForWeek($rt->id, $weekStartString);
         }
         return response()->json(['message' => 'OK']);
     }
 
     public function index(Request $request): JsonResponse
     {
-        // #region agent log
-        self::debugLog('RepeatedTodoController::index', 'entry GET repeated-todos', [], 'H3');
-        // #endregion
         $this->ensureWeekArchived($request);
         $repeatedTodos = RepeatedTodo::where('user_id', $request->user()->id)
             ->orderBy('sort_order')
