@@ -32,4 +32,9 @@ class Category extends Model
     {
         return $this->hasMany(Todo::class, 'category_id');
     }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class, 'category_id');
+    }
 }

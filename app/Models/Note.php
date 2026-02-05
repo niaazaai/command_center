@@ -10,10 +10,15 @@ class Note extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'title', 'content'];
+    protected $fillable = ['user_id', 'category_id', 'title', 'content'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 }

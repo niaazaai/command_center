@@ -11,7 +11,11 @@ class NoteController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $notes = Note::where('user_id', $request->user()->id)->orderByDesc('updated_at')->get();
+        $query = Note::where('user_id', $request->user()->id)->with('category');
+        if ($request->has('category_id') && $request->category_id !== '' && $request->category_id !== null) {
+            $query->where('category_id', $request->category_id);
+        }
+        $notes = $query->orderByDesc('updated_at')->get();
         return response()->json($notes);
     }
 
@@ -20,9 +24,14 @@ class NoteController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
+            'category_id' => ['nullable', 'exists:categories,id'],
         ]);
         $data['user_id'] = $request->user()->id;
+        if (!empty($data['category_id']) && !\App\Models\Category::where('id', $data['category_id'])->where('user_id', $request->user()->id)->exists()) {
+            abort(403, 'Category does not belong to user');
+        }
         $note = Note::create($data);
+        $note->load('category');
         return response()->json($note, 201);
     }
 
@@ -42,8 +51,13 @@ class NoteController extends Controller
         $data = $request->validate([
             'title' => ['sometimes', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
+            'category_id' => ['nullable', 'exists:categories,id'],
         ]);
+        if (array_key_exists('category_id', $data) && $data['category_id'] !== null && !\App\Models\Category::where('id', $data['category_id'])->where('user_id', $request->user()->id)->exists()) {
+            abort(403, 'Category does not belong to user');
+        }
         $note->update($data);
+        $note->load('category');
         return response()->json($note);
     }
 
