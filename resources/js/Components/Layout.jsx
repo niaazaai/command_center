@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { Link, usePage, router } from '@inertiajs/react';
-import { ListTodo, StickyNote, Lightbulb, Menu, PanelLeftClose, PanelLeft, Home, Bell } from 'lucide-react';
+import { usePage, router } from '@inertiajs/react';
+import { Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { cn } from '@/lib/utils';
 import { Sidebar } from './Sidebar';
-import { Logo } from './Logo';
-import { MiniSidebar } from './MiniSidebar';
+import { Dock } from './Dock';
 
 export function Layout({ children }) {
   const page = usePage();
   const user = page.props.auth?.user;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
-  const currentPath = page.url?.split('?')[0] || (typeof window !== 'undefined' ? window.location.pathname : '/');
 
   const logout = () => router.post('/logout');
 
@@ -23,37 +21,8 @@ export function Layout({ children }) {
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen((o) => !o)}>
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="font-semibold">Command Center</span>
         <div className="w-10" />
       </header>
-
-      <MiniSidebar>
-        <Link href="/">
-          <Button variant={currentPath === '/' ? 'secondary' : 'ghost'} size="icon" title="Home">
-            <Home className="h-5 w-5" />
-          </Button>
-        </Link>
-        <Link href="/todos">
-          <Button variant={currentPath === '/todos' ? 'secondary' : 'ghost'} size="icon" title="Todos">
-            <ListTodo className="h-5 w-5" />
-          </Button>
-        </Link>
-        <Link href="/reminders">
-          <Button variant={currentPath === '/reminders' ? 'secondary' : 'ghost'} size="icon" title="Reminders">
-            <Bell className="h-5 w-5" />
-          </Button>
-        </Link>
-        <Link href="/notes">
-          <Button variant={currentPath === '/notes' ? 'secondary' : 'ghost'} size="icon" title="Notes">
-            <StickyNote className="h-5 w-5" />
-          </Button>
-        </Link>
-        <Link href="/ideas">
-          <Button variant={currentPath === '/ideas' ? 'secondary' : 'ghost'} size="icon" title="Ideas">
-            <Lightbulb className="h-5 w-5" />
-          </Button>
-        </Link>
-      </MiniSidebar>
 
       <Sidebar
         open={sidebarOpen}
@@ -83,7 +52,6 @@ export function Layout({ children }) {
               <PanelLeftClose className="h-5 w-5" />
             )}
           </Button>
-          <Logo />
           <div className="flex-1" />
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground truncate max-w-[100px] sm:max-w-[140px]">
@@ -95,10 +63,12 @@ export function Layout({ children }) {
           </div>
         </nav>
 
-        <main className="flex-1 p-3 md:p-4 overflow-auto bg-muted/20">
+        <main className="flex-1 p-3 md:p-4 overflow-auto bg-muted/20 pb-24">
           {children}
         </main>
       </div>
+
+      <Dock />
     </div>
   );
 }

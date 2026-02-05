@@ -21,7 +21,10 @@ const PRESET_COLORS = [
 export function CreateCategoryDialog({ open, onOpenChange, onCreated }) {
   const [name, setName] = useState('');
   const [color, setColor] = useState(PRESET_COLORS[0]);
+  const [customColor, setCustomColor] = useState('#3b82f6');
   const toast = useToast();
+
+  const activeColor = color === 'custom' ? customColor : color;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,10 +33,11 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated }) {
       const created = await api.post('/categories', {
         name: name.trim(),
         parent_id: null,
-        color: color || null,
+        color: activeColor || null,
       });
       setName('');
       setColor(PRESET_COLORS[0]);
+      setCustomColor('#3b82f6');
       onOpenChange(false);
       onCreated?.(created);
       toast.success('Category created');
@@ -44,7 +48,7 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create category</DialogTitle>
         </DialogHeader>
@@ -56,7 +60,7 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Category name"
-              className="mt-1"
+              className="mt-1 rounded-lg"
             />
           </div>
           <div>
@@ -67,7 +71,7 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated }) {
                   key={c}
                   type="button"
                   className={cn(
-                    'w-8 h-8 rounded-full border-2 transition-transform hover:scale-110',
+                    'w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 shrink-0',
                     color === c ? 'border-foreground ring-2 ring-offset-2 ring-offset-background ring-foreground/30' : 'border-transparent'
                   )}
                   style={{ backgroundColor: c }}
@@ -75,6 +79,29 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated }) {
                   aria-label={`Pick color ${c}`}
                 />
               ))}
+              <button
+                type="button"
+                className={cn(
+                  'w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 shrink-0 flex items-center justify-center',
+                  color === 'custom' ? 'border-foreground ring-2 ring-offset-2 ring-offset-background ring-foreground/30' : 'border-transparent'
+                )}
+                style={{ backgroundColor: customColor }}
+                onClick={() => setColor('custom')}
+                aria-label="Custom color"
+              />
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <Label htmlFor="cat-custom-color" className="text-xs text-muted-foreground shrink-0">
+                Custom color
+              </Label>
+              <input
+                id="cat-custom-color"
+                type="color"
+                value={customColor}
+                onChange={(e) => { setCustomColor(e.target.value); setColor('custom'); }}
+                className="h-8 w-12 cursor-pointer rounded border border-border bg-transparent"
+              />
+              <span className="text-xs text-muted-foreground font-mono">{activeColor}</span>
             </div>
           </div>
           <DialogFooter>
